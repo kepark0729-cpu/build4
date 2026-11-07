@@ -9,6 +9,7 @@ import {
   visibleTasks,
   weekDays,
   type CalendarMode,
+  type KindFilter,
 } from '../calendar'
 import type { Task } from '../data'
 import { dayOfWeek, type DateStr } from '../dates'
@@ -38,10 +39,10 @@ export default function CalendarView({ tasks, members, user, today, holidayNames
     () => new Set(user.role === 'member' ? [user.name] : members),
   )
 
-  const [importantOnly, setImportantOnly] = useState(false)
+  const [kinds, setKinds] = useState<KindFilter>({ important: true, normal: true })
 
   const weeks = useMemo(() => (mode === 'month' ? monthWeeks(anchor) : [weekDays(anchor)]), [mode, anchor])
-  const shown = useMemo(() => visibleTasks(tasks, selected, importantOnly), [tasks, selected, importantOnly])
+  const shown = useMemo(() => visibleTasks(tasks, selected, kinds), [tasks, selected, kinds])
   const periodCount = useMemo(
     () => new Set(weeks.flat().flatMap((d) => tasksOnDay(shown, d).map((t) => t.id))).size,
     [weeks, shown],
@@ -111,12 +112,26 @@ export default function CalendarView({ tasks, members, user, today, holidayNames
           </button>
         </div>
         <div className="buttons" role="group" aria-label="업무 종류">
-          <button type="button" aria-pressed={importantOnly} onClick={() => setImportantOnly((v) => !v)}>
-            ★ 중요만 보기
-          </button>
+          <label>
+            <input
+              type="checkbox"
+              checked={kinds.important}
+              onChange={(e) => setKinds((k) => ({ ...k, important: e.target.checked }))}
+            />{' '}
+            ★ 중요 업무
+          </label>
+          <label>
+            <input
+              type="checkbox"
+              checked={kinds.normal}
+              onChange={(e) => setKinds((k) => ({ ...k, normal: e.target.checked }))}
+            />{' '}
+            일반 업무
+          </label>
         </div>
         <p className="muted">
-          올린 업무가 모두 보이고, 「중요」 업무는 ★ 로 표시됩니다. 시작일부터 종료일까지 날짜마다 나옵니다.
+          보고 싶은 종류에 체크하세요. 둘 다 체크하면 전부 보이고, 중요 업무는 ★ 로 표시됩니다. 시작일부터 종료일까지
+          날짜마다 나옵니다.
         </p>
       </div>
 

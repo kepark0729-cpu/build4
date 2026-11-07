@@ -64,10 +64,12 @@ describe('캘린더에 올릴 업무', () => {
     { id: 3, owner: 'B', important: true, start: '2026-11-10', end: '2026-11-10', startHour: 14 },
     { id: 4, owner: 'B', important: true, start: '2026-11-10', end: '2026-11-10', startHour: 9 },
   ]
-  it('기본은 고른 팀원의 업무를 모두, 중요만 켜면 중요한 것만', () => {
+  it('기본은 고른 팀원의 업무를 모두, 종류를 하나만 켜면 그 종류만', () => {
     expect(visibleTasks(tasks, new Set(['A'])).map((t) => t.id)).toEqual([1, 2])
-    expect(visibleTasks(tasks, new Set(['A']), true).map((t) => t.id)).toEqual([1])
-    expect(visibleTasks(tasks, new Set(['A', 'B']), true).map((t) => t.id)).toEqual([1, 3, 4])
+    expect(visibleTasks(tasks, new Set(['A']), { important: true, normal: false }).map((t) => t.id)).toEqual([1])
+    expect(visibleTasks(tasks, new Set(['A']), { important: false, normal: true }).map((t) => t.id)).toEqual([2])
+    expect(visibleTasks(tasks, new Set(['A']), { important: false, normal: false })).toEqual([])
+    expect(visibleTasks(tasks, new Set(['A', 'B']), { important: true, normal: false }).map((t) => t.id)).toEqual([1, 3, 4])
     expect(visibleTasks(tasks, new Set())).toEqual([])
   })
   it('시작일부터 종료일까지 양끝 포함해 모든 날에 나온다', () => {
