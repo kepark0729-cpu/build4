@@ -13,7 +13,7 @@ import {
 } from '../calendar'
 import type { Task } from '../data'
 import { dayOfWeek, type DateStr } from '../dates'
-import type { User } from '../permissions'
+import { canEditTask, type User } from '../permissions'
 
 const DOW = ['일', '월', '화', '수', '목', '금', '토']
 const COLORS = 8 // 담당자마다 색 8가지를 돌려 쓴다 (CSS 의 m0~m7)
@@ -24,6 +24,7 @@ interface Props {
   user: User
   today: DateStr
   holidayNames: Map<DateStr, string>
+  onChangeImportant: (id: number, important: boolean) => void
 }
 
 function timeText(t: Task) {
@@ -31,7 +32,7 @@ function timeText(t: Task) {
 }
 
 /** 올린 업무를(중요는 ★ 표시, 「중요만 보기」로 걸러 보기) 월간 · 주간으로 보여 주는 캘린더. 팀원 이름 버튼으로 여러 명을 함께 고른다. */
-export default function CalendarView({ tasks, members, user, today, holidayNames }: Props) {
+export default function CalendarView({ tasks, members, user, today, holidayNames, onChangeImportant }: Props) {
   const [mode, setMode] = useState<CalendarMode>('month')
   const [anchor, setAnchor] = useState<DateStr>(today)
   // 처음: 담당자는 자기 버튼, 팀장은 모든 팀원이 눌려 있다.
@@ -130,7 +131,7 @@ export default function CalendarView({ tasks, members, user, today, holidayNames
           </label>
         </div>
         <p className="muted">
-          보고 싶은 종류에 체크하세요. 둘 다 체크하면 전부 보이고, 중요 업무는 ★ 로 표시됩니다. 시작일부터 종료일까지
+          보고 싶은 종류에 체크하세요. 둘 다 체크하면 전부 보이고, 중요 업무는 ★ 로 표시됩니다. 내 업무의 ☆ / ★ 를 눌러 중요 표시를 바로 바꿀 수 있어요(팀장은 모든 업무). 시작일부터 종료일까지
           날짜마다 나옵니다.
         </p>
       </div>
@@ -172,7 +173,21 @@ export default function CalendarView({ tasks, members, user, today, holidayNames
                       title={`${t.owner} · ${t.title}${timeText(t) ? ` · ${timeText(t)}` : ''}`}
                     >
                       <span className="ct-title">
-                        {t.important && <span aria-label="중요">★ </span>}
+                        {canEditTask(user, t) ? (
+                          <button
+                            type="button"
+                            className="ghost"
+                            style={{ padding: '0 2px', minHeight: 0, border: 0 }}
+                            aria-pressed={t.important}
+                            aria-label={`${t.title} 중요 표시 ${t.important ? '끄기' : '켜기'}`}
+                            title={t.important ? '중요 해제' : '중요로 표시'}
+                            onClick={() => onChangeImportant(t.id, !t.important)}
+                          >
+                            {t.important ? '★' : '☆'}
+                          </button>
+                        ) : (
+                          t.important && <span aria-label="중요">★ </span>
+                        )}
                         {timeText(t) && <span className="ct-time">{timeText(t)}</span>}
                         {t.title}
                       </span>
