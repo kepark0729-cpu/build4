@@ -29,7 +29,7 @@ function timeText(t: Task) {
   return t.startHour !== undefined && t.endHour !== undefined ? `${t.startHour}~${t.endHour}시` : ''
 }
 
-/** 「중요」로 체크한 업무를 월간 · 주간으로 보여 주는 캘린더. 팀원 이름 버튼으로 여러 명을 함께 고른다. */
+/** 올린 업무를(중요는 ★ 표시, 「중요만 보기」로 걸러 보기) 월간 · 주간으로 보여 주는 캘린더. 팀원 이름 버튼으로 여러 명을 함께 고른다. */
 export default function CalendarView({ tasks, members, user, today, holidayNames }: Props) {
   const [mode, setMode] = useState<CalendarMode>('month')
   const [anchor, setAnchor] = useState<DateStr>(today)
@@ -38,8 +38,10 @@ export default function CalendarView({ tasks, members, user, today, holidayNames
     () => new Set(user.role === 'member' ? [user.name] : members),
   )
 
+  const [importantOnly, setImportantOnly] = useState(false)
+
   const weeks = useMemo(() => (mode === 'month' ? monthWeeks(anchor) : [weekDays(anchor)]), [mode, anchor])
-  const shown = useMemo(() => visibleTasks(tasks, selected), [tasks, selected])
+  const shown = useMemo(() => visibleTasks(tasks, selected, importantOnly), [tasks, selected, importantOnly])
   const periodCount = useMemo(
     () => new Set(weeks.flat().flatMap((d) => tasksOnDay(shown, d).map((t) => t.id))).size,
     [weeks, shown],
@@ -108,7 +110,14 @@ export default function CalendarView({ tasks, members, user, today, holidayNames
             {allSelected ? '전체 해제' : '전체 선택'}
           </button>
         </div>
-        <p className="muted">「중요」로 체크한 업무만 보입니다. 시작일부터 종료일까지 날짜마다 나옵니다.</p>
+        <div className="buttons" role="group" aria-label="업무 종류">
+          <button type="button" aria-pressed={importantOnly} onClick={() => setImportantOnly((v) => !v)}>
+            ★ 중요만 보기
+          </button>
+        </div>
+        <p className="muted">
+          올린 업무가 모두 보이고, 「중요」 업무는 ★ 로 표시됩니다. 시작일부터 종료일까지 날짜마다 나옵니다.
+        </p>
       </div>
 
       <div className="cal-scroll">
@@ -148,6 +157,7 @@ export default function CalendarView({ tasks, members, user, today, holidayNames
                       title={`${t.owner} · ${t.title}${timeText(t) ? ` · ${timeText(t)}` : ''}`}
                     >
                       <span className="ct-title">
+                        {t.important && <span aria-label="중요">★ </span>}
                         {timeText(t) && <span className="ct-time">{timeText(t)}</span>}
                         {t.title}
                       </span>
@@ -163,7 +173,7 @@ export default function CalendarView({ tasks, members, user, today, holidayNames
 
       {periodCount === 0 && (
         <p className="muted" role="status">
-          이 기간에 보여 줄 중요 업무가 없습니다. 팀원 버튼이나 기간을 바꿔 보세요.
+          이 기간에 보여 줄 업무가 없습니다. 팀원 버튼이나 기간을 바꿔 보세요.
         </p>
       )}
     </section>

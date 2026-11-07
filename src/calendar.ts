@@ -64,12 +64,13 @@ export function tasksOnDay<T extends Ranged>(tasks: T[], day: DateStr): T[] {
   return tasks.filter((t) => t.start <= day && day <= t.end)
 }
 
-/** 캘린더에는 「중요」로 체크한 업무 중 고른 팀원의 것만 올린다. */
+/** 캘린더에는 고른 팀원의 업무를 올린다. importantOnly 가 켜지면 「중요」로 체크한 것만. */
 export function visibleTasks<T extends { important: boolean; owner: string }>(
   tasks: T[],
   selected: ReadonlySet<string>,
+  importantOnly = false,
 ): T[] {
-  return tasks.filter((t) => t.important && selected.has(t.owner))
+  return tasks.filter((t) => selected.has(t.owner) && (!importantOnly || t.important))
 }
 
 /** 시간이 있는 업무를 시작 시간 순으로 먼저, 시간 없는 업무는 뒤에(등록 순). */
