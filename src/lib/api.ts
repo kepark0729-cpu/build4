@@ -65,7 +65,8 @@ function fail(what: string, error: { message: string }): never {
 }
 
 export async function fetchTasks(): Promise<Task[]> {
-  const { data, error } = await client().from('tasks').select('*').order('id')
+  // 삭제 표시가 된 업무는 목록에 나오지 않는다.
+  const { data, error } = await client().from('tasks').select('*').is('deleted_at', null).order('id')
   if (error) fail('업무를 불러오지', error)
   return (data as TaskRow[]).map(rowToTask)
 }
@@ -95,6 +96,55 @@ export async function insertTask(n: NewTaskInput, today: DateStr, editor: string
     .select('*')
     .single()
   if (error) fail('업무를 저장하지', error)
+  return rowToTask(data as TaskRow)
+}
+
+/** 수정할 때 바뀌는 칸. 상태 · 마지막 상태 변경일은 건드리지 않는다(상태 버튼으로만 바뀐다). */
+export function taskToUpdate(n: NewTaskInput, editor: string) {
+  return {
+    title: n.title,
+    category: n.category,
+    owner: n.owner,
+    start_date: n.start,
+    end_date: n.end,
+    important: n.important,
+    start_hour: n.startHour ?? null,
+    end_hour: n.startHour === undefined ? null : (n.endHour ?? null),
+    last_editor: editor,
+  }
+}
+
+export async function updateTask(id: number, n: NewTaskInput, editor: string): Promise<Task> {
+  const { data, error } = await client()
+    .from('tasks')
+    .update(taskToUpdate(n, editor))
+    .eq('id', id)
+    .is('deleted_at', null)
+    .select('*')
+    .single()
+  if (error) fail('업무를 수정하지', error)
+  return rowToTask(data as TaskRow)
+}
+
+/** 삭제: 지우지 않고 삭제 표시만 한다. 되돌릴 수 있다. */
+export async function deleteTask(id: number, by: string): Promise<void> {
+  const { error } = await client()
+    .from('tasks')
+    .update({ deleted_at: new Date().toISOString(), deleted_by: by })
+    .eq('id', id)
+    .is('deleted_at', null)
+  if (error) fail('업무를 삭제하지', error)
+}
+
+/** 삭제 되돌리기 */
+export async function restoreTask(id: number): Promise<Task> {
+  const { data, error } = await client()
+    .from('tasks')
+    .update({ deleted_at: null, deleted_by: null })
+    .eq('id', id)
+    .select('*')
+    .single()
+  if (error) fail('삭제를 되돌리지', error)
   return rowToTask(data as TaskRow)
 }
 

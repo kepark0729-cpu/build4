@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import type { Task } from '../data'
 import { isOverdue, isStalled, rangeText, type DateStr, type Status } from '../dates'
 import { canEditTask, type User } from '../permissions'
@@ -11,6 +12,8 @@ interface Props {
   holidays: Set<DateStr>
   user: User
   onChangeStatus: (id: number, status: Status) => void
+  onEdit: (task: Task) => void
+  onDelete: (task: Task) => void
 }
 
 function timeText(t: Task) {
@@ -19,10 +22,21 @@ function timeText(t: Task) {
     : ''
 }
 
-export default function TeamList({ members, tasks, today, holidays, user, onChangeStatus }: Props) {
+export default function TeamList({
+  members,
+  tasks,
+  today,
+  holidays,
+  user,
+  onChangeStatus,
+  onEdit,
+  onDelete,
+}: Props) {
+  // 삭제는 한 번 더 물어본다. 누른 업무 하나만 확인 줄이 나온다.
+  const [confirmId, setConfirmId] = useState<number | null>(null)
+
   return (
     <section aria-label="팀 업무 목록">
-      <h2>팀 업무</h2>
       {members.map((m) => {
         const mine = tasks.filter((t) => t.owner === m)
         return (
@@ -53,17 +67,46 @@ export default function TeamList({ members, tasks, today, holidays, user, onChan
                       <span className="muted edited">마지막 수정 {t.lastEditor}</span>
                     </div>
                     {editable ? (
-                      <div className="buttons small" role="group" aria-label={`${t.title} 상태`}>
-                        {STATUSES.map((s) => (
-                          <button
-                            type="button"
-                            key={s}
-                            aria-pressed={t.status === s}
-                            onClick={() => onChangeStatus(t.id, s)}
-                          >
-                            {s}
-                          </button>
-                        ))}
+                      <div className="task-actions">
+                        <div className="buttons small" role="group" aria-label={`${t.title} 상태`}>
+                          {STATUSES.map((s) => (
+                            <button
+                              type="button"
+                              key={s}
+                              aria-pressed={t.status === s}
+                              onClick={() => onChangeStatus(t.id, s)}
+                            >
+                              {s}
+                            </button>
+                          ))}
+                        </div>
+                        {confirmId === t.id ? (
+                          <span className="confirm" role="alert">
+                            삭제할까요?
+                            <button
+                              type="button"
+                              className="danger"
+                              onClick={() => {
+                                setConfirmId(null)
+                                onDelete(t)
+                              }}
+                            >
+                              삭제
+                            </button>
+                            <button type="button" className="ghost" onClick={() => setConfirmId(null)}>
+                              취소
+                            </button>
+                          </span>
+                        ) : (
+                          <span className="row-btns">
+                            <button type="button" className="ghost" onClick={() => onEdit(t)}>
+                              수정
+                            </button>
+                            <button type="button" className="ghost" onClick={() => setConfirmId(t.id)}>
+                              삭제
+                            </button>
+                          </span>
+                        )}
                       </div>
                     ) : (
                       <span className="status-view" aria-label={`${t.title} 상태`}>

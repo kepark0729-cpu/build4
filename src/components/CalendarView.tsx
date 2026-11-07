@@ -31,7 +31,8 @@ function timeText(t: Task) {
 
 /** 「중요」로 체크한 업무를 월간 · 주간으로 보여 주는 캘린더. 팀원 이름 버튼으로 여러 명을 함께 고른다. */
 export default function CalendarView({ tasks, members, user, today, holidayNames }: Props) {
-  const [mode, setMode] = useState<CalendarMode>('month')
+  // 처음에는 주간으로 열고, 월간은 버튼을 눌렀을 때만 보여 준다.
+  const [mode, setMode] = useState<CalendarMode>('week')
   const [anchor, setAnchor] = useState<DateStr>(today)
   // 처음: 담당자는 자기 버튼, 팀장은 모든 팀원이 눌려 있다.
   const [selected, setSelected] = useState<Set<string>>(

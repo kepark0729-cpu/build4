@@ -1,5 +1,29 @@
 import { describe, expect, it } from 'vitest'
-import { newTaskToRow, rowToTask, type TaskRow } from './api'
+import { newTaskToRow, rowToTask, taskToUpdate, type TaskRow } from './api'
+
+describe('업무 수정할 때 바뀌는 칸', () => {
+  const n = {
+    title: '고친 이름',
+    category: '기타(회식 준비)',
+    owner: '급여 담당자 B',
+    start: '2026-11-10',
+    end: '2026-11-12',
+    important: true,
+    startHour: 10,
+    endHour: 12,
+  }
+  it('상태와 마지막 상태 변경일은 포함하지 않고 마지막 수정자만 바꾼다', () => {
+    const u = taskToUpdate(n, '팀장')
+    expect(u).toMatchObject({ title: '고친 이름', category: '기타(회식 준비)', last_editor: '팀장', start_hour: 10, end_hour: 12 })
+    expect(u).not.toHaveProperty('status')
+    expect(u).not.toHaveProperty('last_changed')
+  })
+  it('시간을 지우면 둘 다 비운다', () => {
+    const u = taskToUpdate({ ...n, startHour: undefined, endHour: undefined }, '팀장')
+    expect(u.start_hour).toBeNull()
+    expect(u.end_hour).toBeNull()
+  })
+})
 
 const row: TaskRow = {
   id: 7,
