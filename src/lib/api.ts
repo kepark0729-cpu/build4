@@ -165,6 +165,18 @@ export async function updateStatus(
   return rowToTask(data as TaskRow)
 }
 
+/** 중요 표시 바꾸기. 상태가 아니므로 변경일(오래 멈춤 계산)은 건드리지 않는다. */
+export async function updateImportant(id: number, important: boolean): Promise<Task> {
+  const { data, error } = await client()
+    .from('tasks')
+    .update({ important })
+    .eq('id', id)
+    .select('*')
+    .single()
+  if (error) fail('중요 표시를 바꾸지', error)
+  return rowToTask(data as TaskRow)
+}
+
 /** 구분 추가. 다른 사람이 먼저 같은 이름을 만들었으면(23505) 그대로 성공으로 본다. */
 export async function insertCategory(name: string): Promise<void> {
   const { error } = await client().from('categories').insert({ name })

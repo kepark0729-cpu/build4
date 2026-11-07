@@ -266,6 +266,10 @@ button.danger:hover:not(:disabled) { background: #8f0019; border-color: #8f0019;
 .ct-title { font-weight: 700; word-break: keep-all; color: var(--ink); }
 .ct-time { font-weight: 700; margin-right: 4px; color: var(--c); }
 .ct-owner { color: var(--muted); font-size: 11px; }
+/* 캘린더 칸의 ★ / ☆ 중요 표시 단추는 알약이 아니라 글자처럼 보이게 한다. */
+.ct button.ghost { background: transparent; color: var(--accent-orange); border: 0; font-size: 14px; line-height: 1; }
+.ct button.ghost[aria-pressed='true'], .ct button.ghost[aria-pressed='true']:hover:not(:disabled) { background: transparent; color: var(--accent-orange); border: 0; }
+.ct button.ghost:hover:not(:disabled) { background: transparent; }
 
 .member .dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; background: var(--c); margin-right: 6px; }
 button.member[aria-pressed='true'] { background: var(--cbg); border-color: var(--c); color: var(--ink); font-weight: 700; }

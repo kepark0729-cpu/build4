@@ -11,6 +11,7 @@ import {
   insertMember,
   insertTask,
   restoreTask,
+  updateImportant,
   updateStatus,
   updateTask,
 } from './lib/api'
@@ -225,6 +226,19 @@ export default function App() {
     }
   }
 
+  async function changeImportant(id: number, important: boolean) {
+    if (!user) return
+    const current = tasks.find((t) => t.id === id)
+    if (!current || current.important === important || !canEditTask(user, current)) return
+    setActionError('')
+    try {
+      const savedTask = await updateImportant(id, important)
+      setTasks((prev) => prev.map((t) => (t.id === id ? savedTask : t)))
+    } catch (e) {
+      setActionError(messageOf(e))
+    }
+  }
+
   async function addCategory(name: string): Promise<boolean> {
     setActionError('')
     try {
@@ -339,6 +353,7 @@ export default function App() {
             user={user}
             today={today}
             holidayNames={holidayNames}
+            onChangeImportant={changeImportant}
           />
         </div>
 
